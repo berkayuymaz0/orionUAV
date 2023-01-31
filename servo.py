@@ -1,6 +1,4 @@
-#door open/close servo motor control script for jetson nano
-
-import RPi.GPIO as GPIO
+import Jetson.GPIO as GPIO
 import time
 
 GPIO.setmode(GPIO.BCM)
@@ -17,7 +15,7 @@ try:
         time.sleep(1)
         p.ChangeDutyCycle(2.5)
         time.sleep(1)
-        
+
 except KeyboardInterrupt:
     p.stop()
     GPIO.cleanup()
