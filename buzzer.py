@@ -1,5 +1,5 @@
 #alarm with usinf buzzer for jetson nano
-import RPi.GPIO as GPIO
+import Jetson.GPIO as GPIO
 import time
 
 GPIO.setmode(GPIO.BCM)
