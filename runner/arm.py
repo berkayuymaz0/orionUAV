@@ -34,7 +34,7 @@ class Drone:
         print("Orion Armed...")
         self.orion.simple_takeoff(attitude)
         print("Taking off!.")
-        while self.orion.location.global_relative_frame.alt < attitude * 0.9:
+        while self.orion.location.global_relative_frame.alt < attitude * 0.95:
             print(" Altitude: ", orion.location.global_relative_frame.alt)
             time.sleep(1)
 
@@ -43,6 +43,19 @@ class Drone:
             print(f"changing to {mode_n} .")
             self.orion.mode = VehicleMode(mode_n)
             time.sleep(1)
+
+    def up(self, alt):
+        while self.orion.location.global_relative_frame.alt > alt * 0.8:
+            tmpLoc = LocationGlobalRelative(
+                self.orion.location.global_relative_frame.lat,
+                self.orion.location.global_relative_frame.lon,
+                alt)
+
+            self.orion.simple_goto(tmpLoc)
+            time.sleep(1)
+            print("Going lower..")
+            if self.orion.location.global_relative_frame.alt < alt + 0.3:
+                return True
 
     def failsafe(self):
         if self.orion.mode == VehicleMode("RTL"):
@@ -57,7 +70,6 @@ orion = connect('tcp:127.0.0.1:5762', wait_ready=True)
 drone = Drone(orion, sim=False)
 
 drone.takeoff(10)
-drone.change_mode("GUIDED")
+time.sleep(5)
+drone.up(10)
 
-while True:
-    drone.failsafe()
