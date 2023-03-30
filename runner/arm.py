@@ -3,6 +3,8 @@ import sys
 import time
 import math
 from math import cos, asin, sqrt, pi
+import torch
+import torchvision
 
 import cv2
 import numpy as np
@@ -97,61 +99,10 @@ class Drone:
             print("Coming Back to Home")
             sys.exit(1)
 
-    def send_ned_position(self, d_north, d_east):
 
-        msg = self.orion.message_factory.set_position_target_local_ned_encode(
-            0,  # time_boot_ms (not used)
-            0, 0,  # target system, target component
-            mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED,  # frame
-            0b0000111111111000,  # type_mask (only speeds enabled)
-            d_north, d_east, 0,  # x, y, z positions
-            0, 0, 0,  # x, y, z velocity in m/s (not used)
-            0, 0, 0,  # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
-            0, 0)  # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
-
-        self.orion.send_mavlink(msg)
-        time.sleep(2)
-        print("success")
-
-    def circle_move(self):
-        radius = 0.0001
-        lat = self.orion.location.global_relative_frame.lat
-        lon = self.orion.location.global_relative_frame.lon
-
-        while True:
-            if self.orion.location.global_relative_frame.alt >= alt * 0.95:
-                break
-            time.sleep(1)
-
-        points = 30        # points in the circle we draw
-        loops = 2 * points # do two loop
-        coords = []
-        for i in range(0, loops):
-            degrees = (i/points)*360
-            radians = (math.pi/180)*degrees
-            x = lat + radius * math.cos(radians)
-            y = (lon + radius * math.sin(radians))
-            coords.append((x,y))
-
-        cmds = self.orion.commands
-        cmds.clear()
-
-        for lat,lon in coords:
-            point = LocationGlobalRelative(lat,lon,alt)
-            cmds.add(Command( 0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0, lat, lon, alt))
-
-        cmds.upload()
-
-        self.orion.mode = VehicleMode("AUTO")
-        time.sleep(1)
-
-        while True:
-            nextwaypoint=self.orion.commands.next
-            time.sleep(1)
 
 ####AI####
 def load_model(model_name):
-
     if model_name:
         model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name, force_reload=True)
     else:
@@ -238,6 +189,43 @@ class live_ai:
         cap.release()
         cv2.destroyAllWindows()
 
+def move_sircle(alt): 
+    radius = 0.0001
+    lat = orion.location.global_relative_frame.lat
+    lon = orion.location.global_relative_frame.lon
+
+    while True:
+        if orion.location.global_relative_frame.alt >= alt * 0.95:
+            break
+        time.sleep(1)
+
+    points = 30        # points in the circle we draw
+    loops = 2 * points # do two loop
+    coords = []
+    for i in range(0, loops):
+        degrees = (i/points)*360
+        radians = (math.pi/180)*degrees
+        x = lat + radius * math.cos(radians)
+        y = (lon + radius * math.sin(radians))
+        coords.append((x,y))
+
+    cmds = orion.commands
+    cmds.clear()
+
+    for lat,lon in coords:
+        point = LocationGlobalRelative(lat,lon,alt)
+        cmds.add(Command( 0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0, lat, lon, alt))
+
+    cmds.upload()
+
+    orion.mode = VehicleMode("AUTO")
+    time.sleep(1)
+
+    while True:
+        nextwaypoint=orion.commands.next
+        time.sleep(1)
+
+
 
 ##### RUNNER ######
 
@@ -245,8 +233,7 @@ class live_ai:
 orion = connect('tcp:127.0.0.1:5762', wait_ready=True)
 
 drone = Drone(orion, sim=False)
-drone.airspeed = 10
-
+drone.airspeed = 5
 
 # takeoff
 drone.takeoff(10)
@@ -254,18 +241,6 @@ drone.takeoff(10)
 detector = live_ai(capture_index=0, model_name='yolov5s')
 detector()
 
-while True:
 
-    while drone.mode == VehicleMode("LOITER"):
-        drone.failsafe()
-        time.sleep(1)
-
-    while fire_found is not False:
-        print("House Searching")
-        
-    drone.circle_move()
-    
-    while house_found is not False:
-        print("House Found")
-
-        
+move_sircle(10)
+   
