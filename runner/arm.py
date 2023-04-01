@@ -1,19 +1,15 @@
 import sys
-import sys
 import time
 import math
 from math import cos, asin, sqrt, pi
 import torch
-import torchvision
 
 import cv2
 import numpy as np
-import torch
+
 from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
 from pymavlink import mavutil
 
-fire_found = False
-house_found = False
 
 
 ##### DRONE #####
@@ -48,13 +44,14 @@ class Drone:
         self.orion = orion
         self.sim = sim
         self.command = orion.commands
-
+        
         self.mask_dropped = False
 
         self.reset()
 
     def reset(self):
         self.mask_dropped = False
+        
 
     def takeoff(self, attitude):
         while self.orion.is_armable is not True:
@@ -240,7 +237,3 @@ drone.takeoff(10)
 
 detector = live_ai(capture_index=0, model_name='yolov5s')
 detector()
-
-
-move_sircle(10)
-   

@@ -6,7 +6,6 @@ from time import time
 
 class live_ai:
     
-
     def __init__(self, capture_index, model_name):
 
         self.capture_index = capture_index
@@ -22,9 +21,9 @@ class live_ai:
     def load_model(self, model_name):
 
         if model_name:
-            model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name, force_reload=True)
+            model = torch.hub.load('../yolov5', 'custom', path=model_name, source='local')
         else:
-            model = torch.hub.load('/yolov5', 'yolov5s', pretrained=True)
+            model = torch.hub.load('/yolov5x', 'yolov5x', pretrained=True)
         return model
 
     def score_frame(self, frame):
@@ -45,7 +44,7 @@ class live_ai:
         x_shape, y_shape = frame.shape[1], frame.shape[0]
         for i in range(n):
             row = cord[i]
-            if row[4] >= 0.3:
+            if row[4] >= 0.1:
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
                 bgr = (0, 255, 0)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
@@ -64,18 +63,13 @@ class live_ai:
             ret, frame = cap.read()
             assert ret
             
-            frame = cv2.resize(frame, (416,416))
+            frame = cv2.resize(frame, (512,512))
             
-            start_time = time()
             results = self.score_frame(frame)
             frame = self.plot_boxes(results, frame)
-            
-            end_time = time()
-            fps = 1/np.round(end_time - start_time, 2)
-             
-            cv2.putText(frame, f'FPS: {int(fps)}', (20,70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2)
-            
-            cv2.imshow('YOLOv5 Detection', frame)
+
+
+            cv2.imshow('cam', frame)
  
             if cv2.waitKey(5) & 0xFF == ord('q'):
                 break
@@ -83,6 +77,6 @@ class live_ai:
         cap.release()
         cv2.destroyAllWindows()
         
-detector = live_ai(capture_index=0, model_name='yolov5s')
+detector = live_ai(capture_index=0, model_name='last.pt')
 detector()
 
